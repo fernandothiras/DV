@@ -36,6 +36,29 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{ email: string; plano: string } | null>(null);
+
+  const getReference = (plano: string, email: string) => {
+    const cleanEmail = email.trim().toUpperCase();
+    if (plano === "starter") {
+      return `DV-STARTER-${cleanEmail}`;
+    } else if (plano === "davoz") {
+      return `DV-VOZ-${cleanEmail}`;
+    } else if (plano === "mastermind") {
+      return `DV-MASTER-${cleanEmail}`;
+    }
+    return `DV-${plano.toUpperCase()}-${cleanEmail}`;
+  };
+
+  const handleCopyReference = () => {
+    if (!submittedData) return;
+    const refText = getReference(submittedData.plano, submittedData.email);
+    navigator.clipboard.writeText(refText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const handleScrollToForm = (planId?: string) => {
     if (planId) {
@@ -84,6 +107,10 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
     }
 
     setErrors({});
+    setSubmittedData({
+      email: formData.email,
+      plano: formData.plano
+    });
     setSuccess(true);
 
     // Keep the defaults but clear name, email and details
@@ -535,28 +562,198 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
 
           <div className="bg-white p-8 rounded-2xl border border-brand-border shadow-md">
             {success ? (
-              <div className="text-center py-8 space-y-4">
-                <div className="mx-auto w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
+              <div className="space-y-6 text-left">
+                {/* Success Message Banner */}
+                <div className="text-center pb-6 border-b border-brand-border space-y-2">
+                  <div className="mx-auto w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="font-display font-bold text-xl text-[#1a1a1a]">Obrigado! Vamos contactar em breve.</h3>
+                  <p className="text-sm text-slate-700">
+                    O teu registo foi efetuado com sucesso para o email <span className="font-semibold text-slate-900">{submittedData?.email}</span>.
+                  </p>
+                  <p className="text-brand-text-desc text-xs">
+                    Um email de confirmação será enviado. O formulário foi limpo para nova inscrição.
+                  </p>
                 </div>
-                <h3 className="font-display font-bold text-2xl text-[#1a1a1a]">Inscrição Efetuada!</h3>
-                <p className="text-[#1a1a1a] leading-relaxed text-sm">
-                  Obrigado! Vamos contactar em breve.
-                </p>
-                <p className="text-brand-text-desc text-xs mt-1">
-                  Um email de confirmação será enviado.
-                </p>
-                <div className="pt-4">
+
+                {/* DADOS PARA TRANSFERÊNCIA MULTICAIXA */}
+                <div className="bg-[#f8f9fa] border border-[#e0e0e0] rounded-xl p-6 text-[#1a1a1a] space-y-4">
+                  <div className="border-b border-[#e0e0e0] pb-2 flex items-center gap-2">
+                    <span className="text-lg">💳</span>
+                    <h4 className="font-display font-extrabold text-[#1a1a1a] text-sm uppercase tracking-wide">
+                      DADOS PARA TRANSFERÊNCIA MULTICAIXA
+                    </h4>
+                  </div>
+
+                  <div className="space-y-3.5 text-sm">
+                    {/* Plano */}
+                    <div className="flex justify-between items-center py-1 border-b border-dashed border-[#e0e0e0]">
+                      <span className="font-semibold text-slate-700">Plano:</span>
+                      <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                        {submittedData?.plano === "starter" ? "STARTER - 4.000 Kz" : submittedData?.plano === "davoz" ? "DA VOZ - 6.500 Kz" : "MASTERMIND - 9.000 Kz"}
+                      </span>
+                    </div>
+
+                    {/* IBAN */}
+                    <div className="space-y-1">
+                      <span className="font-semibold text-slate-700 block text-xs sm:text-sm">📱 IBAN:</span>
+                      <div className="font-mono text-[#ff6b35] font-extrabold text-[13px] sm:text-sm tracking-wider bg-white px-3 py-2 rounded-lg border border-[#e0e0e5] select-all break-all text-center sm:text-left">
+                        AO06 0040 0000 6189 7689 1017 3
+                      </div>
+                    </div>
+
+                    {/* Referência */}
+                    <div className="space-y-1.5">
+                      <span className="font-semibold text-slate-700 block text-xs sm:text-sm">📌 Referência:</span>
+                      <div className="bg-white p-3 rounded-lg border border-[#e0e0e0] space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <span className="font-mono font-bold text-xs bg-[#f8f9fa] px-2 py-1 rounded text-slate-900 break-all select-all border border-slate-100">
+                            {submittedData ? getReference(submittedData.plano, submittedData.email) : ""}
+                          </span>
+                          <span className="text-[10px] text-[#666666] self-start sm:self-auto">
+                            (Exemplo: {submittedData?.plano === "starter" ? "DV-STARTER-joao@email.com" : submittedData?.plano === "davoz" ? "DV-VOZ-joao@email.com" : "DV-MASTER-joao@email.com"})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyReference}
+                          className="w-full bg-[#ff6b35] hover:bg-[#e55a25] text-white font-bold py-2 px-3 rounded-lg text-xs transition duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span className="font-extrabold">Referência copiada! ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                              </svg>
+                              <span>Copiar Referência</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Valor */}
+                    <div className="flex justify-between items-center py-1 border-b border-dashed border-[#e0e0e0]">
+                      <span className="font-semibold text-slate-700">💰 Valor:</span>
+                      <span className="font-extrabold text-[#ff6b35] text-sm sm:text-base">
+                        {submittedData?.plano === "starter" ? "4.000 Kz" : submittedData?.plano === "davoz" ? "6.500 Kz" : "9.000 Kz"}
+                      </span>
+                    </div>
+
+                    {/* Multicaixa Express */}
+                    <div className="flex justify-between items-center py-1 border-b border-dashed border-[#e0e0e0]">
+                      <span className="font-semibold text-slate-700">🏪 Multicaixa Express:</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        936210505
+                      </span>
+                    </div>
+
+                    {/* Descrição na transferência */}
+                    <div className="flex justify-between items-center py-1">
+                      <span className="font-semibold text-slate-700">📝 Descrição na transferência:</span>
+                      <span className="font-medium text-slate-900 bg-[#e0f2fe]/50 px-2 py-0.5 rounded font-mono text-xs">
+                        {submittedData?.plano === "starter" ? '"DA VOZ - STARTER"' : submittedData?.plano === "davoz" ? '"DA VOZ - DA VOZ"' : '"DA VOZ - MASTERMIND"'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PRÓXIMOS PASSOS */}
+                <div className="bg-[#f8f9fa] border border-[#e0e0e0] rounded-xl p-6 text-[#1a1a1a] space-y-4">
+                  <div className="border-b border-[#e0e0e0] pb-2 flex items-center gap-2">
+                    <span className="text-base">⏱️</span>
+                    <h4 className="font-display font-extrabold text-[#1a1a1a] text-sm uppercase tracking-wide">
+                      PRÓXIMOS PASSOS
+                    </h4>
+                  </div>
+
+                  <ul className="space-y-3.5 text-xs text-slate-700 font-medium leading-relaxed">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-sm font-semibold text-[#ff6b35]">1️⃣</span>
+                      <div>
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm">Transfere agora no Multicaixa</p>
+                        <p className="text-[#6c757d] text-[11px]">(Online ou no balcão mais próximo)</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-sm font-semibold text-[#ff6b35]">2️⃣</span>
+                      <div>
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm">Vamos confirmar em máximo 1 hora</p>
+                        <p className="text-[#6c757d] text-[11px]">(Verifica teu email)</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-sm font-semibold text-[#ff6b35]">3️⃣</span>
+                      <div>
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm">Tu recebes os 30 posts</p>
+                        <p className="text-[#6c757d] text-[11px]">(Via email + Google Drive)</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-sm font-semibold text-[#ff6b35]">4️⃣</span>
+                      <div>
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm">Começa a postar e vender!</p>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <div className="border-t border-[#e0e0e0] pt-3.5 space-y-2 text-xs">
+                    <span className="font-bold text-slate-800 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                      📞 Dúvidas?
+                    </span>
+                    <div className="space-y-1.5 pl-1">
+                      <p className="font-semibold text-slate-800 text-xs">
+                        WhatsApp: <span className="text-[#ff6b35] font-bold font-mono">+244 929976331</span>
+                      </p>
+                      <p className="font-semibold text-slate-800 text-xs">
+                        Email: <span className="text-[#ff6b35] font-mono select-all text-[11px]">contacto.fernatech@gmail.com</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* MENSAGEM PÓS-PAGAMENTO */}
+                <div className="bg-[#ff6b35]/5 border border-[#ff6b35]/15 rounded-xl p-5 text-xs space-y-3">
+                  <p className="font-bold text-[#ff6b35] text-[13px] leading-snug">
+                    Assim que confirmarmos o pagamento, tu recebes email com:
+                  </p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#1a1a1a] font-semibold">
+                    <li className="flex items-center gap-1.5">
+                      <span className="text-emerald-500 text-sm">✅</span>
+                      <span>30 posts prontos</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <span className="text-emerald-500 text-sm">✅</span>
+                      <span>3 templates Canva</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <span className="text-emerald-500 text-sm">✅</span>
+                      <span>Link Google Drive</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <span className="text-emerald-500 text-sm">✅</span>
+                      <span>Suporte WhatsApp</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Reset button if needed to clear success and input again */}
+                <div className="pt-4 border-t border-brand-border text-center">
                   <button
                     onClick={() => {
                       setSuccess(false);
-                      setTimeout(() => nameInputRef.current?.focus(), 100);
+                      setTimeout(() => nameInputRef.current?.focus(), 150);
                     }}
-                    className="text-brand-orange hover:text-brand-orange-hover font-semibold text-sm transition font-mono cursor-pointer"
+                    className="text-brand-orange hover:text-brand-orange-hover font-bold text-xs transition uppercase tracking-wider font-mono cursor-pointer"
                   >
-                    Fazer nova inscrição →
+                    ← Fazer Nova Inscrição
                   </button>
                 </div>
               </div>
