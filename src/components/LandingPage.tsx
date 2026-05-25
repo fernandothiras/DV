@@ -117,13 +117,6 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
           
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => onStartApp()}
-              id="nav-app-btn"
-              className="px-4 py-2 hover:text-brand-orange text-slate-300 font-medium transition text-sm cursor-pointer"
-            >
-              Entrar no Painel
-            </button>
-            <button 
               onClick={() => handleScrollToForm("davoz")}
               id="nav-cta-btn"
               className="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-orange/20 transition-all text-sm flex items-center gap-1.5 cursor-pointer"
