@@ -1,3 +1,4 @@
+import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
 import { PROBLEMS, SOLUTIONS, TESTIMONIALS, PLANS } from "../data";
 import { 
@@ -21,6 +22,81 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onStartApp }: LandingPageProps) {
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const formSectionRef = useRef<HTMLElement>(null);
+
+  const [formData, setFormData] = useState({
+    nomeCompleto: "",
+    email: "",
+    negocio: "",
+    segmento: "E-commerce",
+    whatsapp: "+244 ",
+    plano: "davoz"
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [success, setSuccess] = useState(false);
+
+  const handleScrollToForm = (planId?: string) => {
+    if (planId) {
+      setFormData(prev => ({ ...prev, plano: planId }));
+    }
+    formSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+    setTimeout(() => {
+      nameInputRef.current?.focus();
+    }, 300);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.nomeCompleto.trim()) {
+      newErrors.nomeCompleto = "O Nome Completo é obrigatório.";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "O Email é obrigatório.";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Insira um endereço de e-mail válido.";
+      }
+    }
+
+    if (!formData.negocio.trim()) {
+      newErrors.negocio = "O seu Negócio/Profissão é obrigatório.";
+    }
+
+    const cleanedWhatsapp = formData.whatsapp.trim();
+    if (!cleanedWhatsapp || cleanedWhatsapp === "+244") {
+      newErrors.whatsapp = "O número de WhatsApp é obrigatório.";
+    } else if (!cleanedWhatsapp.startsWith("+244")) {
+      newErrors.whatsapp = "O WhatsApp deve conter o indicativo (+244...).";
+    } else if (cleanedWhatsapp.replace(/[^0-9]/g, "").length < 6) {
+      newErrors.whatsapp = "Por favor, digite um número de WhatsApp válido.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setSuccess(false);
+      return;
+    }
+
+    setErrors({});
+    setSuccess(true);
+
+    // Keep the defaults but clear name, email and details
+    setFormData({
+      nomeCompleto: "",
+      email: "",
+      negocio: "",
+      segmento: "E-commerce",
+      whatsapp: "+244 ",
+      plano: formData.plano
+    });
+  };
+
   return (
     <div className="bg-brand-white text-brand-text-main min-h-screen font-sans selection:bg-brand-orange selection:text-white">
       
@@ -48,7 +124,7 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
               Entrar no Painel
             </button>
             <button 
-              onClick={() => onStartApp("davoz")}
+              onClick={() => handleScrollToForm("davoz")}
               id="nav-cta-btn"
               className="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-orange/20 transition-all text-sm flex items-center gap-1.5 cursor-pointer"
             >
@@ -105,7 +181,7 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
           >
             <button
               id="hero-primary-cta"
-              onClick={() => onStartApp("davoz")}
+              onClick={() => handleScrollToForm("davoz")}
               className="w-full sm:w-auto bg-brand-orange hover:bg-brand-orange-hover text-white text-lg font-bold px-8 py-4 rounded-xl shadow-xl shadow-brand-orange/15 hover:shadow-brand-orange/25 transition-all flex items-center justify-center gap-2 cursor-pointer group"
             >
               Começar Mês Gratuito
@@ -202,7 +278,7 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
               <div className="mt-10">
                 <button
                   id="solution-trigger-btn"
-                  onClick={() => onStartApp("davoz")}
+                  onClick={() => handleScrollToForm("davoz")}
                   className="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold px-7 py-3.5 rounded-xl inline-flex items-center gap-2 transition cursor-pointer"
                 >
                   Experimentar o Criador de Copy
@@ -393,7 +469,7 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
                   <div className="mt-8">
                     <button
                       id={`buy-btn-${plan.id}`}
-                      onClick={() => onStartApp(plan.id)}
+                      onClick={() => handleScrollToForm(plan.id)}
                       className={`w-full py-4 rounded-xl font-bold transition text-md hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
                         isDefault 
                           ? "bg-brand-orange hover:bg-brand-orange-hover text-white shadow-lg shadow-brand-orange/10" 
@@ -432,7 +508,7 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
           <div className="pt-4">
             <button
               id="final-cta-btn"
-              onClick={() => onStartApp("davoz")}
+              onClick={() => handleScrollToForm("davoz")}
               className="bg-brand-orange hover:bg-brand-orange-hover text-white text-lg font-bold px-8 py-4.5 rounded-xl shadow-xl shadow-brand-orange/15 transition duration-300 inline-flex items-center gap-2 cursor-pointer group"
             >
               Começar Grátis com 100% Zero Risco
@@ -441,6 +517,182 @@ export default function LandingPage({ onStartApp }: LandingPageProps) {
             <p className="text-slate-400 text-xs font-mono mt-3.5">
               Sem cartão de crédito necessário. Cancele com um só clique.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* INTEGRATED LEAD CAPTURE FORM */}
+      <section 
+        ref={formSectionRef} 
+        id="lead-registration-form" 
+        className="py-24 px-6 bg-[#f8f9fa] border-b border-brand-border"
+      >
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="text-brand-orange text-xs font-mono font-bold tracking-widest uppercase block mb-3">
+              Inscrição Rápida
+            </span>
+            <h2 className="font-display font-extrabold text-3xl md:text-4xl text-[#1a1a1a] tracking-tight">
+              Comeca Teu Mes Gratuito Agora
+            </h2>
+            <p className="text-brand-text-desc mt-2 text-sm md:text-base">
+              Sem cartão. Sem compromisso. Sem pegadinhas.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border border-brand-border shadow-md">
+            {success ? (
+              <div className="text-center py-8 space-y-4">
+                <div className="mx-auto w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="font-display font-bold text-2xl text-[#1a1a1a]">Inscrição Efetuada!</h3>
+                <p className="text-[#1a1a1a] leading-relaxed text-sm">
+                  Obrigado! Vamos contactar em breve.
+                </p>
+                <p className="text-brand-text-desc text-xs mt-1">
+                  Um email de confirmação será enviado.
+                </p>
+                <div className="pt-4">
+                  <button
+                    onClick={() => {
+                      setSuccess(false);
+                      setTimeout(() => nameInputRef.current?.focus(), 100);
+                    }}
+                    className="text-brand-orange hover:text-brand-orange-hover font-semibold text-sm transition font-mono cursor-pointer"
+                  >
+                    Fazer nova inscrição →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Nome Completo */}
+                <div>
+                  <label htmlFor="form-fullname" className="block text-sm font-semibold text-[#1a1a1a] mb-1.5 align-left text-left">
+                    Nome Completo *
+                  </label>
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    id="form-fullname"
+                    value={formData.nomeCompleto}
+                    onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
+                    placeholder="Seu nome completo"
+                    className={`w-full bg-[#ffffff] border ${errors.nomeCompleto ? 'border-red-500 focus:border-red-500' : 'border-[#e0e0e0] focus:border-[#ff6b35]'} text-[#1a1a1a] rounded-lg px-4 py-2.5 focus:outline-hidden text-sm transition`}
+                  />
+                  {errors.nomeCompleto && (
+                    <p className="text-red-500 text-xs mt-1 text-left font-medium">{errors.nomeCompleto}</p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label htmlFor="form-email" className="block text-sm font-semibold text-[#1a1a1a] mb-1.5 align-left text-left">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="form-email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="exemplo@gmail.com"
+                    className={`w-full bg-[#ffffff] border ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-[#e0e0e0] focus:border-[#ff6b35]'} text-[#1a1a1a] rounded-lg px-4 py-2.5 focus:outline-hidden text-sm transition`}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1 text-left font-medium">{errors.email}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Negócio/Profissão */}
+                  <div>
+                    <label htmlFor="form-business" className="block text-sm font-semibold text-[#1a1a1a] mb-1.5 align-left text-left">
+                      Negócio/Profissão *
+                    </label>
+                    <input
+                      type="text"
+                      id="form-business"
+                      value={formData.negocio}
+                      onChange={(e) => setFormData({ ...formData, negocio: e.target.value })}
+                      placeholder="Ex: Seu Negócio"
+                      className={`w-full bg-[#ffffff] border ${errors.negocio ? 'border-red-500 focus:border-red-500' : 'border-[#e0e0e0] focus:border-[#ff6b35]'} text-[#1a1a1a] rounded-lg px-4 py-2.5 focus:outline-hidden text-sm transition`}
+                    />
+                    {errors.negocio && (
+                      <p className="text-red-500 text-xs mt-1 text-left font-medium">{errors.negocio}</p>
+                    )}
+                  </div>
+
+                  {/* Segmento */}
+                  <div>
+                    <label htmlFor="form-segment" className="block text-sm font-semibold text-[#1a1a1a] mb-1.5 align-left text-left">
+                      Segmento
+                    </label>
+                    <select
+                      id="form-segment"
+                      value={formData.segmento}
+                      onChange={(e) => setFormData({ ...formData, segmento: e.target.value })}
+                      className="w-full bg-[#ffffff] border border-[#e0e0e0] focus:border-[#ff6b35] text-[#1a1a1a] rounded-lg px-4 py-2.5 focus:outline-hidden text-sm cursor-pointer"
+                    >
+                      <option value="Tech/SaaS">Tech/SaaS</option>
+                      <option value="E-commerce">E-commerce</option>
+                      <option value="Consultoria">Consultoria</option>
+                      <option value="Beleza/Wellness">Beleza/Wellness</option>
+                      <option value="Serviços">Serviços</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* WhatsApp com código */}
+                  <div>
+                    <label htmlFor="form-whatsapp" className="block text-sm font-semibold text-[#1a1a1a] mb-1.5 align-left text-left">
+                      WhatsApp com código *
+                    </label>
+                    <input
+                      type="text"
+                      id="form-whatsapp"
+                      value={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      placeholder="+244 9..."
+                      className={`w-full bg-[#ffffff] border ${errors.whatsapp ? 'border-red-500 focus:border-red-500' : 'border-[#e0e0e0] focus:border-[#ff6b35]'} text-[#1a1a1a] rounded-lg px-4 py-2.5 focus:outline-hidden text-sm transition`}
+                    />
+                    {errors.whatsapp && (
+                      <p className="text-red-500 text-xs mt-1 text-left font-medium">{errors.whatsapp}</p>
+                    )}
+                  </div>
+
+                  {/* Plano Escolhido */}
+                  <div>
+                    <label htmlFor="form-plan" className="block text-sm font-semibold text-[#1a1a1a] mb-1.5 align-left text-left">
+                      Plano Escolhido
+                    </label>
+                    <select
+                      id="form-plan"
+                      value={formData.plano}
+                      onChange={(e) => setFormData({ ...formData, plano: e.target.value })}
+                      className="w-full bg-[#ffffff] border border-[#e0e0e0] focus:border-[#ff6b35] text-[#1a1a1a] rounded-lg px-4 py-2.5 focus:outline-hidden text-sm cursor-pointer"
+                    >
+                      <option value="starter">STARTER - 4.000 Kz</option>
+                      <option value="davoz">DA VOZ - 6.500 Kz</option>
+                      <option value="mastermind">MASTERMIND - 9.000 Kz</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    className="w-full bg-[#ff6b35] hover:bg-[#e55a25] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl active:scale-[0.99] transition duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    Comeca Agora
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </section>
