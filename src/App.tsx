@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import LandingPage from "./components/LandingPage";
 import { PROBLEMS, PLANS, INITIAL_POSTS } from "./data";
 import { Post, BrandProfile } from "./types";
+import { useLocalStorage } from "./hooks/useLocalStorage";
+import { ApiService } from "./services/api";
 import {
   Sparkles,
   Calendar,
@@ -48,11 +50,8 @@ export default function App() {
     platform: "all"
   });
 
-  // Active Social Plan Posts
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const cached = localStorage.getItem("da_voz_posts");
-    return cached ? JSON.parse(cached) : INITIAL_POSTS;
-  });
+  // Active Social Plan Posts - managed via custom local storage Hook
+  const [posts, setPosts] = useLocalStorage<Post[]>("da_voz_posts", INITIAL_POSTS);
 
   // Currently selected post in workspace
   const [selectedPostIndex, setSelectedPostIndex] = useState<number>(0);
@@ -78,11 +77,6 @@ export default function App() {
   const [editHashtagsString, setEditHashtagsString] = useState("");
   const [editImagePrompt, setEditImagePrompt] = useState("");
 
-  // Persist posts
-  useEffect(() => {
-    localStorage.setItem("da_voz_posts", JSON.stringify(posts));
-  }, [posts]);
-
   // Sync edit form on post selection
   useEffect(() => {
     if (posts.length > 0 && selectedPostIndex < posts.length) {
@@ -96,10 +90,9 @@ export default function App() {
     }
   }, [selectedPostIndex, posts]);
 
-  // Check backend server status
+  // Check backend server status using the ApiService
   useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json())
+    ApiService.checkHealth()
       .then((data) => {
         setApiStatus({
           checked: true,
@@ -136,28 +129,14 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Generate new schedule through API call
+  // Generate new schedule through ApiService call
   const handleGeneratePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     triggerToast("🎙️ Gerando o seu plano estratégico pelo DA VOZ. Por favor, aguarde...");
 
     try {
-      const response = await fetch("/api/generate-posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brandName: profile.brandName,
-          niche: profile.niche,
-          description: profile.description,
-          audience: profile.audience,
-          tone: profile.tone,
-          platform: profile.platform,
-          count: generationCount
-        })
-      });
-
-      const data = await response.json();
+      const data = await ApiService.generatePosts(profile, generationCount);
       if (data.success && data.posts && data.posts.length > 0) {
         // Map any generated item to default Draft state
         const formattedPosts = data.posts.map((p: any) => ({
@@ -168,7 +147,7 @@ export default function App() {
         setSelectedPostIndex(0);
         triggerToast(`🔥 Sucesso! ${formattedPosts.length} posts criados com gíria de Angola e prontos!`);
       } else {
-        throw new Error("Formato inválido retornado pelo servidor");
+        throw new Error(data.error || "Formato inválido retornado pelo servidor");
       }
     } catch (err: any) {
       console.error("Failed to generate:", err);
