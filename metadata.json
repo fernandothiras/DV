@@ -1,0 +1,6 @@
+{
+  "name": "DA VOZ",
+  "description": "Plataforma inteligente de copywriting e planeamento de redes sociais. Gere 30 posts mensais com português angolano real que converte de verdade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
